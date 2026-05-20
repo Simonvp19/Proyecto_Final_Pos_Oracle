@@ -31,5 +31,8 @@ namespace Proyecto_Final.Data
         public DbSet<Dia> Dias { get; set; }
 
         public DbSet<Visita> Visitas { get; set; }
+        public DbSet<Reporte> Reportes { get; set; }
+
+        public DbSet<Reporte_Venta> Reportes_Venta { get; set; }
     }
 }

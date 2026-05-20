@@ -7,7 +7,7 @@ using Proyecto_Final.Data;
 using Proyecto_Final.DTOs;
 using Proyecto_Final_API.Models;
 
-namespace Proyecto_Final_API.Controllers
+namespace Proyecto_Final.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

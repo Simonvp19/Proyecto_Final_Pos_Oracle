@@ -22,10 +22,14 @@ namespace Proyecto_Final.Models
         public int IdSucursal { get; set; }
 
         // Navigation Properties
+        // Navigation Properties
+        [ForeignKey(nameof(IdCliente))]
         public Cliente Cliente { get; set; }
 
+        [ForeignKey(nameof(IdEmpleado))]
         public Empleado Empleado { get; set; }
 
+        [ForeignKey(nameof(IdSucursal))]
         public Sucursal Sucursal { get; set; }
 
         public ICollection<DetalleVenta> DetallesVenta { get; set; }

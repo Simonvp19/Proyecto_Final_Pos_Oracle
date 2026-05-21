@@ -12,8 +12,8 @@ using Proyecto_Final.Data;
 namespace Proyecto_Final.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260514051144_Inicial")]
-    partial class Inicial
+    [Migration("20260520154118_InicialFinal")]
+    partial class InicialFinal
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -65,20 +65,14 @@ namespace Proyecto_Final.Migrations
                     b.Property<int>("IdVenta")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductoIdProducto")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("SubTotal")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<int>("VentaIdVenta")
-                        .HasColumnType("int");
-
                     b.HasKey("IdDetalleVenta");
 
-                    b.HasIndex("ProductoIdProducto");
+                    b.HasIndex("IdProducto");
 
-                    b.HasIndex("VentaIdVenta");
+                    b.HasIndex("IdVenta");
 
                     b.ToTable("DetallesVenta");
                 });
@@ -122,20 +116,14 @@ namespace Proyecto_Final.Migrations
                     b.Property<int>("IdSucursal")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductoIdProducto")
-                        .HasColumnType("int");
-
                     b.Property<int>("Stock")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SucursalIdSucursal")
                         .HasColumnType("int");
 
                     b.HasKey("IdInventario");
 
-                    b.HasIndex("ProductoIdProducto");
+                    b.HasIndex("IdProducto");
 
-                    b.HasIndex("SucursalIdSucursal");
+                    b.HasIndex("IdSucursal");
 
                     b.ToTable("Inventarios");
                 });
@@ -170,12 +158,9 @@ namespace Proyecto_Final.Migrations
                     b.Property<decimal>("PrecioUnitario")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<int>("ProveedorIdProveedor")
-                        .HasColumnType("int");
-
                     b.HasKey("IdProducto");
 
-                    b.HasIndex("ProveedorIdProveedor");
+                    b.HasIndex("IdProveedor");
 
                     b.ToTable("Productos");
                 });
@@ -195,6 +180,60 @@ namespace Proyecto_Final.Migrations
                     b.HasKey("IdProveedor");
 
                     b.ToTable("Proveedores");
+                });
+
+            modelBuilder.Entity("Proyecto_Final.Models.Reporte", b =>
+                {
+                    b.Property<int>("IdReporte")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdReporte"));
+
+                    b.Property<decimal>("Descuadre")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TotalEstimadoVenta")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalRealVenta")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalVentaEfectivo")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalVentaTarjeta")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("IdReporte");
+
+                    b.ToTable("Reportes");
+                });
+
+            modelBuilder.Entity("Proyecto_Final.Models.Reporte_Venta", b =>
+                {
+                    b.Property<int>("IdReporteVenta")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdReporteVenta"));
+
+                    b.Property<int>("IdReporte")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdVenta")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdReporteVenta");
+
+                    b.HasIndex("IdReporte");
+
+                    b.HasIndex("IdVenta");
+
+                    b.ToTable("Reportes_Venta");
                 });
 
             modelBuilder.Entity("Proyecto_Final.Models.Sucursal", b =>
@@ -226,12 +265,6 @@ namespace Proyecto_Final.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdVenta"));
 
-                    b.Property<int>("ClienteIdCliente")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EmpleadoIdEmpleado")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
 
@@ -244,19 +277,16 @@ namespace Proyecto_Final.Migrations
                     b.Property<int>("IdSucursal")
                         .HasColumnType("int");
 
-                    b.Property<int>("SucursalIdSucursal")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("TotalFinal")
                         .HasColumnType("decimal(10,2)");
 
                     b.HasKey("IdVenta");
 
-                    b.HasIndex("ClienteIdCliente");
+                    b.HasIndex("IdCliente");
 
-                    b.HasIndex("EmpleadoIdEmpleado");
+                    b.HasIndex("IdEmpleado");
 
-                    b.HasIndex("SucursalIdSucursal");
+                    b.HasIndex("IdSucursal");
 
                     b.ToTable("Ventas");
                 });
@@ -286,23 +316,17 @@ namespace Proyecto_Final.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdVisita"));
 
-                    b.Property<int>("DiaIdDia")
-                        .HasColumnType("int");
-
                     b.Property<int>("IdDia")
                         .HasColumnType("int");
 
                     b.Property<int>("IdProveedor")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProveedorIdProveedor")
-                        .HasColumnType("int");
-
                     b.HasKey("IdVisita");
 
-                    b.HasIndex("DiaIdDia");
+                    b.HasIndex("IdDia");
 
-                    b.HasIndex("ProveedorIdProveedor");
+                    b.HasIndex("IdProveedor");
 
                     b.ToTable("Visitas");
                 });
@@ -311,13 +335,13 @@ namespace Proyecto_Final.Migrations
                 {
                     b.HasOne("Proyecto_Final.Models.Producto", "Producto")
                         .WithMany()
-                        .HasForeignKey("ProductoIdProducto")
+                        .HasForeignKey("IdProducto")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Proyecto_Final.Models.Venta", "Venta")
                         .WithMany("DetallesVenta")
-                        .HasForeignKey("VentaIdVenta")
+                        .HasForeignKey("IdVenta")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -330,13 +354,13 @@ namespace Proyecto_Final.Migrations
                 {
                     b.HasOne("Proyecto_Final.Models.Producto", "Producto")
                         .WithMany()
-                        .HasForeignKey("ProductoIdProducto")
+                        .HasForeignKey("IdProducto")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Proyecto_Final.Models.Sucursal", "Sucursal")
                         .WithMany("Inventarios")
-                        .HasForeignKey("SucursalIdSucursal")
+                        .HasForeignKey("IdSucursal")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -349,30 +373,49 @@ namespace Proyecto_Final.Migrations
                 {
                     b.HasOne("Proyecto_Final.Models.Proveedor", "Proveedor")
                         .WithMany("Productos")
-                        .HasForeignKey("ProveedorIdProveedor")
+                        .HasForeignKey("IdProveedor")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Proveedor");
                 });
 
+            modelBuilder.Entity("Proyecto_Final.Models.Reporte_Venta", b =>
+                {
+                    b.HasOne("Proyecto_Final.Models.Reporte", "Reporte")
+                        .WithMany("Reportes_Venta")
+                        .HasForeignKey("IdReporte")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_Final.Models.Venta", "Venta")
+                        .WithMany()
+                        .HasForeignKey("IdVenta")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Reporte");
+
+                    b.Navigation("Venta");
+                });
+
             modelBuilder.Entity("Proyecto_Final.Models.Venta", b =>
                 {
                     b.HasOne("Proyecto_Final.Models.Cliente", "Cliente")
                         .WithMany("Ventas")
-                        .HasForeignKey("ClienteIdCliente")
+                        .HasForeignKey("IdCliente")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Proyecto_Final.Models.Empleado", "Empleado")
                         .WithMany("Ventas")
-                        .HasForeignKey("EmpleadoIdEmpleado")
+                        .HasForeignKey("IdEmpleado")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Proyecto_Final.Models.Sucursal", "Sucursal")
                         .WithMany()
-                        .HasForeignKey("SucursalIdSucursal")
+                        .HasForeignKey("IdSucursal")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -387,13 +430,13 @@ namespace Proyecto_Final.Migrations
                 {
                     b.HasOne("Proyecto_Final_API.Models.Dia", "Dia")
                         .WithMany("Visitas")
-                        .HasForeignKey("DiaIdDia")
+                        .HasForeignKey("IdDia")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Proyecto_Final.Models.Proveedor", "Proveedor")
                         .WithMany()
-                        .HasForeignKey("ProveedorIdProveedor")
+                        .HasForeignKey("IdProveedor")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -415,6 +458,11 @@ namespace Proyecto_Final.Migrations
             modelBuilder.Entity("Proyecto_Final.Models.Proveedor", b =>
                 {
                     b.Navigation("Productos");
+                });
+
+            modelBuilder.Entity("Proyecto_Final.Models.Reporte", b =>
+                {
+                    b.Navigation("Reportes_Venta");
                 });
 
             modelBuilder.Entity("Proyecto_Final.Models.Sucursal", b =>

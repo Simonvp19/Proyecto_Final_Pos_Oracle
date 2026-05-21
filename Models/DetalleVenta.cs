@@ -6,22 +6,20 @@ namespace Proyecto_Final.Models
 {
     public class DetalleVenta
     {
-        [Key]
-        public int IdDetalleVenta { get; set; }
+        public int IdVenta { get; set; }
+
+        public int IdProducto { get; set; }
 
         public int Cantidad { get; set; }
 
         [Column(TypeName = "decimal(10,2)")]
         public decimal SubTotal { get; set; }
 
-        // FK
-        public int IdVenta { get; set; }
-
-        public int IdProducto { get; set; }
-
         // Navigation Properties
+        [ForeignKey(nameof(IdVenta))]
         public Venta Venta { get; set; }
 
+        [ForeignKey(nameof(IdProducto))]
         public Producto Producto { get; set; }
     }
 }

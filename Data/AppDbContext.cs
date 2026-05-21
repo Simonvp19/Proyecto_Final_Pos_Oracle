@@ -34,5 +34,18 @@ namespace Proyecto_Final.Data
         public DbSet<Reporte> Reportes { get; set; }
 
         public DbSet<Reporte_Venta> Reportes_Venta { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // PK compuesta DetalleVenta
+            modelBuilder.Entity<DetalleVenta>()
+                .HasKey(dv => new { dv.IdVenta, dv.IdProducto });
+
+            // PK compuesta Inventario
+            modelBuilder.Entity<Inventario>()
+                .HasKey(i => new { i.IdProducto, i.IdSucursal });
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

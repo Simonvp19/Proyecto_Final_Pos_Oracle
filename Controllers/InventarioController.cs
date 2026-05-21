@@ -2,8 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Proyecto_Final.Data;
 using Proyecto_Final.Models;
-using Proyecto_Final.Data;
-using Proyecto_Final.Models;
 
 namespace Proyecto_Final.Controllers
 {
@@ -18,11 +16,11 @@ namespace Proyecto_Final.Controllers
             _context = context;
         }
 
-        // =========================
-        // GET TODO EL INVENTARIO
-        // =========================
+        // =========================================
+        // GET: api/Inventario
+        // =========================================
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Inventario>>> GetInventario()
+        public async Task<ActionResult<IEnumerable<Inventario>>> GetInventarios()
         {
             return await _context.Inventarios
                 .Include(i => i.Producto)
@@ -30,16 +28,20 @@ namespace Proyecto_Final.Controllers
                 .ToListAsync();
         }
 
-        // =========================
-        // GET INVENTARIO POR ID
-        // =========================
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Inventario>> GetInventario(int id)
+        // =========================================
+        // GET: api/Inventario/1/1
+        // =========================================
+        [HttpGet("{idProducto}/{idSucursal}")]
+        public async Task<ActionResult<Inventario>> GetInventario(
+            int idProducto,
+            int idSucursal)
         {
             var inventario = await _context.Inventarios
                 .Include(i => i.Producto)
                 .Include(i => i.Sucursal)
-                .FirstOrDefaultAsync(i => i.IdInventario == id);
+                .FirstOrDefaultAsync(i =>
+                    i.IdProducto == idProducto &&
+                    i.IdSucursal == idSucursal);
 
             if (inventario == null)
             {
@@ -49,63 +51,81 @@ namespace Proyecto_Final.Controllers
             return inventario;
         }
 
-        // =========================
-        // POST
-        // =========================
+        // =========================================
+        // POST: api/Inventario
+        // =========================================
         [HttpPost]
-        public async Task<ActionResult<Inventario>> PostInventario(Inventario inventario)
+        public async Task<ActionResult<Inventario>> PostInventario(
+            Inventario inventario)
         {
-            // Validar producto
-            var productoExiste = await _context.Productos
-                .AnyAsync(p => p.IdProducto == inventario.IdProducto);
-
-            if (!productoExiste)
-            {
-                return BadRequest("El producto no existe");
-            }
-
-            // Validar sucursal
-            var sucursalExiste = await _context.Sucursales
-                .AnyAsync(s => s.IdSucursal == inventario.IdSucursal);
-
-            if (!sucursalExiste)
-            {
-                return BadRequest("La sucursal no existe");
-            }
-
             _context.Inventarios.Add(inventario);
 
             await _context.SaveChangesAsync();
 
-            return Ok(inventario);
+            return CreatedAtAction(
+                nameof(GetInventario),
+                new
+                {
+                    idProducto = inventario.IdProducto,
+                    idSucursal = inventario.IdSucursal
+                },
+                inventario);
         }
 
-        // =========================
-        // PUT
-        // =========================
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutInventario(int id, Inventario inventario)
+        // =========================================
+        // PUT: api/Inventario/1/1
+        // =========================================
+        [HttpPut("{idProducto}/{idSucursal}")]
+        public async Task<IActionResult> PutInventario(
+            int idProducto,
+            int idSucursal,
+            Inventario inventario)
         {
-            if (id != inventario.IdInventario)
+            if (
+                idProducto != inventario.IdProducto ||
+                idSucursal != inventario.IdSucursal
+            )
             {
                 return BadRequest();
             }
 
-            _context.Entry(inventario).State = EntityState.Modified;
+            _context.Entry(inventario).State =
+                EntityState.Modified;
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                var existe = await _context.Inventarios
+                    .AnyAsync(i =>
+                        i.IdProducto == idProducto &&
+                        i.IdSucursal == idSucursal);
+
+                if (!existe)
+                {
+                    return NotFound();
+                }
+
+                throw;
+            }
 
             return NoContent();
         }
 
-        // =========================
-        // DELETE
-        // =========================
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteInventario(int id)
+        // =========================================
+        // DELETE: api/Inventario/1/1
+        // =========================================
+        [HttpDelete("{idProducto}/{idSucursal}")]
+        public async Task<IActionResult> DeleteInventario(
+            int idProducto,
+            int idSucursal)
         {
             var inventario = await _context.Inventarios
-                .FindAsync(id);
+                .FirstOrDefaultAsync(i =>
+                    i.IdProducto == idProducto &&
+                    i.IdSucursal == idSucursal);
 
             if (inventario == null)
             {

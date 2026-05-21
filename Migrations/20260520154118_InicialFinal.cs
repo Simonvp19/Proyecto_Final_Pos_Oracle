@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Proyecto_Final.Migrations
 {
     /// <inheritdoc />
-    public partial class Inicial : Migration
+    public partial class InicialFinal : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -68,6 +68,24 @@ namespace Proyecto_Final.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Reportes",
+                columns: table => new
+                {
+                    IdReporte = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TotalVentaEfectivo = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    TotalVentaTarjeta = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    TotalEstimadoVenta = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    TotalRealVenta = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    Descuadre = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    Fecha = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reportes", x => x.IdReporte);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Sucursales",
                 columns: table => new
                 {
@@ -93,15 +111,14 @@ namespace Proyecto_Final.Migrations
                     PrecioPieza = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     PrecioPaquete = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
-                    IdProveedor = table.Column<int>(type: "int", nullable: false),
-                    ProveedorIdProveedor = table.Column<int>(type: "int", nullable: false)
+                    IdProveedor = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Productos", x => x.IdProducto);
                     table.ForeignKey(
-                        name: "FK_Productos_Proveedores_ProveedorIdProveedor",
-                        column: x => x.ProveedorIdProveedor,
+                        name: "FK_Productos_Proveedores_IdProveedor",
+                        column: x => x.IdProveedor,
                         principalTable: "Proveedores",
                         principalColumn: "IdProveedor",
                         onDelete: ReferentialAction.Cascade);
@@ -114,22 +131,20 @@ namespace Proyecto_Final.Migrations
                     IdVisita = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     IdProveedor = table.Column<int>(type: "int", nullable: false),
-                    IdDia = table.Column<int>(type: "int", nullable: false),
-                    ProveedorIdProveedor = table.Column<int>(type: "int", nullable: false),
-                    DiaIdDia = table.Column<int>(type: "int", nullable: false)
+                    IdDia = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Visitas", x => x.IdVisita);
                     table.ForeignKey(
-                        name: "FK_Visitas_Dias_DiaIdDia",
-                        column: x => x.DiaIdDia,
+                        name: "FK_Visitas_Dias_IdDia",
+                        column: x => x.IdDia,
                         principalTable: "Dias",
                         principalColumn: "IdDia",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Visitas_Proveedores_ProveedorIdProveedor",
-                        column: x => x.ProveedorIdProveedor,
+                        name: "FK_Visitas_Proveedores_IdProveedor",
+                        column: x => x.IdProveedor,
                         principalTable: "Proveedores",
                         principalColumn: "IdProveedor",
                         onDelete: ReferentialAction.Cascade);
@@ -145,29 +160,26 @@ namespace Proyecto_Final.Migrations
                     TotalFinal = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     IdCliente = table.Column<int>(type: "int", nullable: false),
                     IdEmpleado = table.Column<int>(type: "int", nullable: false),
-                    IdSucursal = table.Column<int>(type: "int", nullable: false),
-                    ClienteIdCliente = table.Column<int>(type: "int", nullable: false),
-                    EmpleadoIdEmpleado = table.Column<int>(type: "int", nullable: false),
-                    SucursalIdSucursal = table.Column<int>(type: "int", nullable: false)
+                    IdSucursal = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Ventas", x => x.IdVenta);
                     table.ForeignKey(
-                        name: "FK_Ventas_Clientes_ClienteIdCliente",
-                        column: x => x.ClienteIdCliente,
+                        name: "FK_Ventas_Clientes_IdCliente",
+                        column: x => x.IdCliente,
                         principalTable: "Clientes",
                         principalColumn: "IdCliente",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Ventas_Empleados_EmpleadoIdEmpleado",
-                        column: x => x.EmpleadoIdEmpleado,
+                        name: "FK_Ventas_Empleados_IdEmpleado",
+                        column: x => x.IdEmpleado,
                         principalTable: "Empleados",
                         principalColumn: "IdEmpleado",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Ventas_Sucursales_SucursalIdSucursal",
-                        column: x => x.SucursalIdSucursal,
+                        name: "FK_Ventas_Sucursales_IdSucursal",
+                        column: x => x.IdSucursal,
                         principalTable: "Sucursales",
                         principalColumn: "IdSucursal",
                         onDelete: ReferentialAction.Cascade);
@@ -181,22 +193,20 @@ namespace Proyecto_Final.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Stock = table.Column<int>(type: "int", nullable: false),
                     IdProducto = table.Column<int>(type: "int", nullable: false),
-                    IdSucursal = table.Column<int>(type: "int", nullable: false),
-                    ProductoIdProducto = table.Column<int>(type: "int", nullable: false),
-                    SucursalIdSucursal = table.Column<int>(type: "int", nullable: false)
+                    IdSucursal = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Inventarios", x => x.IdInventario);
                     table.ForeignKey(
-                        name: "FK_Inventarios_Productos_ProductoIdProducto",
-                        column: x => x.ProductoIdProducto,
+                        name: "FK_Inventarios_Productos_IdProducto",
+                        column: x => x.IdProducto,
                         principalTable: "Productos",
                         principalColumn: "IdProducto",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Inventarios_Sucursales_SucursalIdSucursal",
-                        column: x => x.SucursalIdSucursal,
+                        name: "FK_Inventarios_Sucursales_IdSucursal",
+                        column: x => x.IdSucursal,
                         principalTable: "Sucursales",
                         principalColumn: "IdSucursal",
                         onDelete: ReferentialAction.Cascade);
@@ -211,76 +221,110 @@ namespace Proyecto_Final.Migrations
                     Cantidad = table.Column<int>(type: "int", nullable: false),
                     SubTotal = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     IdVenta = table.Column<int>(type: "int", nullable: false),
-                    IdProducto = table.Column<int>(type: "int", nullable: false),
-                    VentaIdVenta = table.Column<int>(type: "int", nullable: false),
-                    ProductoIdProducto = table.Column<int>(type: "int", nullable: false)
+                    IdProducto = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DetallesVenta", x => x.IdDetalleVenta);
                     table.ForeignKey(
-                        name: "FK_DetallesVenta_Productos_ProductoIdProducto",
-                        column: x => x.ProductoIdProducto,
+                        name: "FK_DetallesVenta_Productos_IdProducto",
+                        column: x => x.IdProducto,
                         principalTable: "Productos",
                         principalColumn: "IdProducto",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_DetallesVenta_Ventas_VentaIdVenta",
-                        column: x => x.VentaIdVenta,
+                        name: "FK_DetallesVenta_Ventas_IdVenta",
+                        column: x => x.IdVenta,
+                        principalTable: "Ventas",
+                        principalColumn: "IdVenta",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Reportes_Venta",
+                columns: table => new
+                {
+                    IdReporteVenta = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IdVenta = table.Column<int>(type: "int", nullable: false),
+                    IdReporte = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reportes_Venta", x => x.IdReporteVenta);
+                    table.ForeignKey(
+                        name: "FK_Reportes_Venta_Reportes_IdReporte",
+                        column: x => x.IdReporte,
+                        principalTable: "Reportes",
+                        principalColumn: "IdReporte",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Reportes_Venta_Ventas_IdVenta",
+                        column: x => x.IdVenta,
                         principalTable: "Ventas",
                         principalColumn: "IdVenta",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_DetallesVenta_ProductoIdProducto",
+                name: "IX_DetallesVenta_IdProducto",
                 table: "DetallesVenta",
-                column: "ProductoIdProducto");
+                column: "IdProducto");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DetallesVenta_VentaIdVenta",
+                name: "IX_DetallesVenta_IdVenta",
                 table: "DetallesVenta",
-                column: "VentaIdVenta");
+                column: "IdVenta");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Inventarios_ProductoIdProducto",
+                name: "IX_Inventarios_IdProducto",
                 table: "Inventarios",
-                column: "ProductoIdProducto");
+                column: "IdProducto");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Inventarios_SucursalIdSucursal",
+                name: "IX_Inventarios_IdSucursal",
                 table: "Inventarios",
-                column: "SucursalIdSucursal");
+                column: "IdSucursal");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Productos_ProveedorIdProveedor",
+                name: "IX_Productos_IdProveedor",
                 table: "Productos",
-                column: "ProveedorIdProveedor");
+                column: "IdProveedor");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Ventas_ClienteIdCliente",
+                name: "IX_Reportes_Venta_IdReporte",
+                table: "Reportes_Venta",
+                column: "IdReporte");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reportes_Venta_IdVenta",
+                table: "Reportes_Venta",
+                column: "IdVenta");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ventas_IdCliente",
                 table: "Ventas",
-                column: "ClienteIdCliente");
+                column: "IdCliente");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Ventas_EmpleadoIdEmpleado",
+                name: "IX_Ventas_IdEmpleado",
                 table: "Ventas",
-                column: "EmpleadoIdEmpleado");
+                column: "IdEmpleado");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Ventas_SucursalIdSucursal",
+                name: "IX_Ventas_IdSucursal",
                 table: "Ventas",
-                column: "SucursalIdSucursal");
+                column: "IdSucursal");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Visitas_DiaIdDia",
+                name: "IX_Visitas_IdDia",
                 table: "Visitas",
-                column: "DiaIdDia");
+                column: "IdDia");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Visitas_ProveedorIdProveedor",
+                name: "IX_Visitas_IdProveedor",
                 table: "Visitas",
-                column: "ProveedorIdProveedor");
+                column: "IdProveedor");
         }
 
         /// <inheritdoc />
@@ -293,16 +337,25 @@ namespace Proyecto_Final.Migrations
                 name: "Inventarios");
 
             migrationBuilder.DropTable(
-                name: "Visitas");
+                name: "Reportes_Venta");
 
             migrationBuilder.DropTable(
-                name: "Ventas");
+                name: "Visitas");
 
             migrationBuilder.DropTable(
                 name: "Productos");
 
             migrationBuilder.DropTable(
+                name: "Reportes");
+
+            migrationBuilder.DropTable(
+                name: "Ventas");
+
+            migrationBuilder.DropTable(
                 name: "Dias");
+
+            migrationBuilder.DropTable(
+                name: "Proveedores");
 
             migrationBuilder.DropTable(
                 name: "Clientes");
@@ -312,9 +365,6 @@ namespace Proyecto_Final.Migrations
 
             migrationBuilder.DropTable(
                 name: "Sucursales");
-
-            migrationBuilder.DropTable(
-                name: "Proveedores");
         }
     }
 }

@@ -41,6 +41,9 @@ namespace Proyecto_Final.Controllers
         public async Task<ActionResult<Venta>> GetVenta(int id)
         {
             var venta = await _context.Ventas
+                .Include(v => v.Cliente)
+                .Include(v => v.Empleado)
+                .Include(v => v.Sucursal)
                 .Include(v => v.DetallesVenta)
                 .FirstOrDefaultAsync(v => v.IdVenta == id);
 
@@ -50,6 +53,42 @@ namespace Proyecto_Final.Controllers
             }
 
             return venta;
+        }
+
+        // =========================
+        // GET VENTAS POR SUCURSAL
+        // =========================
+        [HttpGet("sucursal/{idSucursal}")]
+        public async Task<ActionResult<IEnumerable<Venta>>>
+            GetVentasPorSucursal(int idSucursal)
+        {
+            var ventas = await _context.Ventas
+                .Where(v => v.IdSucursal == idSucursal)
+                .Include(v => v.Cliente)
+                .Include(v => v.Empleado)
+                .Include(v => v.Sucursal)
+                .Include(v => v.DetallesVenta)
+                .ToListAsync();
+
+            return ventas;
+        }
+
+        // =========================
+        // GET TOTAL VENTAS SUCURSAL
+        // =========================
+        [HttpGet("sucursal/{idSucursal}/total")]
+        public async Task<ActionResult>
+            GetTotalVentasSucursal(int idSucursal)
+        {
+            var total = await _context.Ventas
+                .Where(v => v.IdSucursal == idSucursal)
+                .SumAsync(v => v.TotalFinal);
+
+            return Ok(new
+            {
+                idSucursal,
+                totalVentas = total
+            });
         }
 
         // =========================
@@ -74,6 +113,7 @@ namespace Proyecto_Final.Controllers
 
             foreach (var item in dto.Productos)
             {
+                // Buscar producto
                 var producto = await _context.Productos
                     .FirstOrDefaultAsync(p =>
                         p.IdProducto == item.IdProducto);
@@ -84,6 +124,7 @@ namespace Proyecto_Final.Controllers
                         $"Producto {item.IdProducto} no encontrado");
                 }
 
+                // Buscar inventario
                 var inventario = await _context.Inventarios
                     .FirstOrDefaultAsync(i =>
                         i.IdProducto == item.IdProducto &&
@@ -95,6 +136,7 @@ namespace Proyecto_Final.Controllers
                         $"Inventario no encontrado");
                 }
 
+                // Validar stock
                 if (inventario.Stock < item.Cantidad)
                 {
                     return BadRequest(
@@ -102,11 +144,13 @@ namespace Proyecto_Final.Controllers
                         producto.NombreProducto);
                 }
 
+                // Calcular subtotal
                 decimal subtotal =
                     producto.PrecioUnitario * item.Cantidad;
 
                 total += subtotal;
 
+                // Crear detalle venta
                 var detalle = new DetalleVenta
                 {
                     IdVenta = venta.IdVenta,
@@ -117,9 +161,11 @@ namespace Proyecto_Final.Controllers
 
                 _context.DetallesVenta.Add(detalle);
 
+                // Descontar inventario
                 inventario.Stock -= item.Cantidad;
             }
 
+            // Actualizar total final
             venta.TotalFinal = total;
 
             await _context.SaveChangesAsync();
@@ -132,7 +178,7 @@ namespace Proyecto_Final.Controllers
         }
 
         // =========================
-        // ELIMINAR VENTA
+        // DELETE
         // =========================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVenta(int id)

@@ -29,6 +29,8 @@ namespace Proyecto_Final.Models
         public int IdProveedor { get; set; }
 
         // Navigation Property
+        // Navigation Property
+        [ForeignKey(nameof(IdProveedor))]
         public Proveedor Proveedor { get; set; }
     }
 }

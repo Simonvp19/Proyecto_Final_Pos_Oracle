@@ -1,5 +1,6 @@
 ﻿using Proyecto_Final.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Proyecto_Final.Models
 {
@@ -14,6 +15,7 @@ namespace Proyecto_Final.Models
 
         public string Rol { get; set; }
 
-        public ICollection<Venta> Ventas { get; set; }
+        [JsonIgnore]
+        public ICollection<Venta>? Ventas { get; set; }
     }
 }

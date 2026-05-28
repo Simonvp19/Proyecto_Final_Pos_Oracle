@@ -1,5 +1,6 @@
 ﻿using Proyecto_Final.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Proyecto_Final.Models
 {
@@ -12,6 +13,7 @@ namespace Proyecto_Final.Models
         public string NombreProveedor { get; set; }
 
         // Navigation Property
-        public ICollection<Producto> Productos { get; set; }
+        [JsonIgnore]
+        public ICollection<Producto>? Productos { get; set; }
     }
 }

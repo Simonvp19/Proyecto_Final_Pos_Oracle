@@ -32,6 +32,6 @@ namespace Proyecto_Final.Models
         [ForeignKey(nameof(IdSucursal))]
         public Sucursal Sucursal { get; set; }
 
-        public ICollection<DetalleVenta> DetallesVenta { get; set; }
+        public ICollection<DetalleVenta>? DetallesVenta { get; set; }
     }
 }

@@ -1,142 +1,154 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Proyecto_Final.Data;
-using Proyecto_Final.Models;
+using Proyecto_Final.Services;
 
 namespace Proyecto_Final.Controllers
 {
+    /// <summary>
+    /// Controller para la gestión de inventario por sucursal
+    /// Permite consultar stock, registrar entradas y salidas de productos
+    /// Delega la lógica de negocio al InventarioServices.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class InventarioController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly InventarioServices _inventarioServices;
 
-        public InventarioController(AppDbContext context)
+        /// <summary>
+        /// Constructor con inyección del servicio de inventario
+        /// </summary>
+        public InventarioController(InventarioServices inventarioServices)
         {
-            _context = context;
+            _inventarioServices = inventarioServices;
         }
 
         // =========================================
-        // GET: api/Inventario
+        // GET: api/Inventario/sucursal/1
+        // Consulta: inventario completo de una sucursal
         // =========================================
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Inventario>>> GetInventarios()
+
+        /// <summary>
+        /// Retorna todos los productos con su stock en una sucursal específica
+        /// </summary>
+        [HttpGet("sucursal/{idSucursal}")]
+        public async Task<IActionResult> GetInventarioPorSucursal(int idSucursal)
         {
-            return await _context.Inventarios
-                .Include(i => i.Producto)
-                .Include(i => i.Sucursal)
-                .ToListAsync();
+            var inventarios = await _inventarioServices.ObtenerPorSucursalAsync(idSucursal);
+            return Ok(inventarios);
         }
 
         // =========================================
         // GET: api/Inventario/1/1
+        // Consulta: stock de un producto en una sucursal
         // =========================================
+
+        /// <summary>
+        /// Retorna el stock de un producto específico en una sucursal
+        /// </summary>
         [HttpGet("{idProducto}/{idSucursal}")]
-        public async Task<ActionResult<Inventario>> GetInventario(
-            int idProducto,
-            int idSucursal)
+        public async Task<IActionResult> GetStock(int idProducto, int idSucursal)
         {
-            var inventario = await _context.Inventarios
-                .Include(i => i.Producto)
-                .Include(i => i.Sucursal)
-                .FirstOrDefaultAsync(i =>
-                    i.IdProducto == idProducto &&
-                    i.IdSucursal == idSucursal);
+            var inventario = await _inventarioServices.ObtenerStockAsync(idProducto, idSucursal);
 
             if (inventario == null)
-            {
-                return NotFound();
-            }
+                return NotFound(new { mensaje = "No existe registro de inventario para ese producto en esta sucursal." });
 
-            return inventario;
+            return Ok(inventario);
         }
 
         // =========================================
-        // POST: api/Inventario
+        // GET: api/Inventario/sucursal/1/stock-bajo
+        // Consulta: productos con stock bajo
         // =========================================
-        [HttpPost]
-        public async Task<ActionResult<Inventario>> PostInventario(
-            Inventario inventario)
+
+        /// <summary>
+        /// Retorna los productos con stock menor o igual al mínimo indicado (default 5)
+        /// Útil para generar alertas de reabastecimiento
+        /// </summary>
+        [HttpGet("sucursal/{idSucursal}/stock-bajo")]
+        public async Task<IActionResult> GetStockBajo(int idSucursal, [FromQuery] int minimo = 5)
         {
-            _context.Inventarios.Add(inventario);
-
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(
-                nameof(GetInventario),
-                new
-                {
-                    idProducto = inventario.IdProducto,
-                    idSucursal = inventario.IdSucursal
-                },
-                inventario);
+            var productos = await _inventarioServices.ObtenerStockBajoAsync(idSucursal, minimo);
+            return Ok(new
+            {
+                idSucursal,
+                minimoStock = minimo,
+                cantidad = productos.Count,
+                productos
+            });
         }
 
         // =========================================
-        // PUT: api/Inventario/1/1
+        // POST: api/Inventario/entrada
+        // Alta: registrar entrada de producto
         // =========================================
-        [HttpPut("{idProducto}/{idSucursal}")]
-        public async Task<IActionResult> PutInventario(
-            int idProducto,
-            int idSucursal,
-            Inventario inventario)
+
+        /// <summary>
+        /// Registra una entrada de stock para un producto en una sucursal
+        /// Si ya existe el inventario, suma la cantidad al stock actual
+        /// Si no existe, lo crea con la cantidad indicada
+        /// </summary>
+        [HttpPost("entrada")]
+        public async Task<IActionResult> RegistrarEntrada(
+            [FromQuery] int idProducto,
+            [FromQuery] int idSucursal,
+            [FromQuery] int cantidad)
         {
-            if (
-                idProducto != inventario.IdProducto ||
-                idSucursal != inventario.IdSucursal
-            )
-            {
-                return BadRequest();
-            }
+            var (exito, mensaje, inventario) =
+                await _inventarioServices.RegistrarEntradaAsync(idProducto, idSucursal, cantidad);
 
-            _context.Entry(inventario).State =
-                EntityState.Modified;
+            if (!exito)
+                return BadRequest(new { mensaje });
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                var existe = await _context.Inventarios
-                    .AnyAsync(i =>
-                        i.IdProducto == idProducto &&
-                        i.IdSucursal == idSucursal);
-
-                if (!existe)
-                {
-                    return NotFound();
-                }
-
-                throw;
-            }
-
-            return NoContent();
+            return Ok(new { mensaje, inventario });
         }
 
         // =========================================
-        // DELETE: api/Inventario/1/1
+        // POST: api/Inventario/salida
+        // Baja: registrar salida manual de producto
         // =========================================
-        [HttpDelete("{idProducto}/{idSucursal}")]
-        public async Task<IActionResult> DeleteInventario(
-            int idProducto,
-            int idSucursal)
+
+        /// <summary>
+        /// Registra una salida manual de stock (merma, ajuste, robo, etc.)
+        /// Valida que haya suficiente stock antes de descontar
+        /// </summary>
+        [HttpPost("salida")]
+        public async Task<IActionResult> RegistrarSalida(
+            [FromQuery] int idProducto,
+            [FromQuery] int idSucursal,
+            [FromQuery] int cantidad)
         {
-            var inventario = await _context.Inventarios
-                .FirstOrDefaultAsync(i =>
-                    i.IdProducto == idProducto &&
-                    i.IdSucursal == idSucursal);
+            var (exito, mensaje, inventario) =
+                await _inventarioServices.RegistrarSalidaAsync(idProducto, idSucursal, cantidad);
 
-            if (inventario == null)
-            {
-                return NotFound();
-            }
+            if (!exito)
+                return BadRequest(new { mensaje });
 
-            _context.Inventarios.Remove(inventario);
+            return Ok(new { mensaje, inventario });
+        }
 
-            await _context.SaveChangesAsync();
+        // =========================================
+        // PUT: api/Inventario/ajuste
+        // Actualización: ajuste directo de stock
+        // =========================================
 
-            return NoContent();
+        /// <summary>
+        /// Ajusta directamente el stock de un producto en una sucursal
+        /// Útil cuando se realiza un conteo físico de inventario
+        /// </summary>
+        [HttpPut("ajuste")]
+        public async Task<IActionResult> AjustarStock(
+            [FromQuery] int idProducto,
+            [FromQuery] int idSucursal,
+            [FromQuery] int nuevoStock)
+        {
+            var (exito, mensaje) =
+                await _inventarioServices.AjustarStockAsync(idProducto, idSucursal, nuevoStock);
+
+            if (!exito)
+                return BadRequest(new { mensaje });
+
+            return Ok(new { mensaje });
         }
     }
 }

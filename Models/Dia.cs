@@ -9,6 +9,6 @@ namespace Proyecto_Final_API.Models
 
         public string NombreDia { get; set; }
 
-        public ICollection<Visita> Visitas { get; set; }
+        public ICollection<Visita>? Visitas { get; set; }
     }
 }

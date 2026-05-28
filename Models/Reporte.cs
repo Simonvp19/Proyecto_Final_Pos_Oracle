@@ -25,7 +25,7 @@ namespace Proyecto_Final.Models
 
         public DateTime Fecha { get; set; }
 
-        public ICollection<Reporte_Venta> Reportes_Venta { get; set; }
+        public ICollection<Reporte_Venta>? Reportes_Venta { get; set; }
     }
 }
 

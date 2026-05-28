@@ -1,201 +1,124 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Proyecto_Final.Data;
 using Proyecto_Final.DTOs;
-using Proyecto_Final.Models;
-using Proyecto_Final.Data;
-using Proyecto_Final.DTOs;
-using Proyecto_Final_API.Models;
+using Proyecto_Final.Services;
 
 namespace Proyecto_Final.Controllers
 {
+    /// <summary>
+    /// Controller para la gestión de ventas del sistema POS
+    /// Permite registrar ventas, consultar historial y calcular totales por turno
+    /// Delega la lógica de negocio al VentaServices
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class VentasController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly VentaServices _ventaServices;
 
-        public VentasController(AppDbContext context)
+        /// <summary>
+        /// Constructor con inyección del servicio de ventas
+        /// </summary>
+        public VentasController(VentaServices ventaServices)
         {
-            _context = context;
+            _ventaServices = ventaServices;
         }
 
-        // =========================
-        // GET TODAS LAS VENTAS
-        // =========================
+        // =========================================
+        // GET: api/Ventas
+        // Consulta: historial completo de ventas
+        // =========================================
+
+        /// <summary>
+        /// Retorna el historial completo de ventas del sistema
+        /// con nombre de cliente, empleado, sucursal y detalle de productos
+        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Venta>>> GetVentas()
+        public async Task<IActionResult> GetVentas()
         {
-            return await _context.Ventas
-                .Include(v => v.Cliente)
-                .Include(v => v.Empleado)
-                .Include(v => v.Sucursal)
-                .Include(v => v.DetallesVenta)
-                .ToListAsync();
+            var ventas = await _ventaServices.ObtenerTodasAsync();
+            return Ok(ventas);
         }
 
-        // =========================
-        // GET VENTA POR ID
-        // =========================
+        // =========================================
+        // GET: api/Ventas/5
+        // Consulta: venta por ID
+        // =========================================
+
+        /// <summary>
+        /// Retorna el detalle completo de una venta específica
+        /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<Venta>> GetVenta(int id)
+        public async Task<IActionResult> GetVenta(int id)
         {
-            var venta = await _context.Ventas
-                .Include(v => v.Cliente)
-                .Include(v => v.Empleado)
-                .Include(v => v.Sucursal)
-                .Include(v => v.DetallesVenta)
-                .FirstOrDefaultAsync(v => v.IdVenta == id);
+            var venta = await _ventaServices.ObtenerPorIdAsync(id);
 
             if (venta == null)
-            {
-                return NotFound();
-            }
+                return NotFound(new { mensaje = "Venta no encontrada." });
 
-            return venta;
+            return Ok(venta);
         }
 
-        // =========================
-        // GET VENTAS POR SUCURSAL
-        // =========================
+        // =========================================
+        // GET: api/Ventas/sucursal/1
+        // Consulta: ventas por sucursal con filtro de fechas
+        // =========================================
+
+        /// <summary>
+        /// Retorna el historial de ventas de una sucursal
+        /// Se puede filtrar por rango de fechas con los parámetros 'desde' y 'hasta'
+        /// Ejemplo: /api/Ventas/sucursal/1?desde=2026-01-01&hasta=2026-12-31
+        /// </summary>
         [HttpGet("sucursal/{idSucursal}")]
-        public async Task<ActionResult<IEnumerable<Venta>>>
-            GetVentasPorSucursal(int idSucursal)
+        public async Task<IActionResult> GetVentasPorSucursal(
+            int idSucursal,
+            [FromQuery] DateTime? desde,
+            [FromQuery] DateTime? hasta)
         {
-            var ventas = await _context.Ventas
-                .Where(v => v.IdSucursal == idSucursal)
-                .Include(v => v.Cliente)
-                .Include(v => v.Empleado)
-                .Include(v => v.Sucursal)
-                .Include(v => v.DetallesVenta)
-                .ToListAsync();
-
-            return ventas;
+            var ventas = await _ventaServices.ObtenerPorSucursalAsync(idSucursal, desde, hasta);
+            return Ok(ventas);
         }
 
-        // =========================
-        // GET TOTAL VENTAS SUCURSAL
-        // =========================
-        [HttpGet("sucursal/{idSucursal}/total")]
-        public async Task<ActionResult>
-            GetTotalVentasSucursal(int idSucursal)
+        // =========================================
+        // GET: api/Ventas/sucursal/1/total-hoy
+        // Consulta: total del día (corte de caja)
+        // =========================================
+
+        /// <summary>
+        /// Retorna el total de ventas del día actual en una sucursal
+        /// Se usa para verificar el estado antes de generar el corte de caja
+        /// </summary>
+        [HttpGet("sucursal/{idSucursal}/total-hoy")]
+        public async Task<IActionResult> GetTotalHoy(int idSucursal)
         {
-            var total = await _context.Ventas
-                .Where(v => v.IdSucursal == idSucursal)
-                .SumAsync(v => v.TotalFinal);
+            var total = await _ventaServices.ObtenerTotalDiaAsync(idSucursal);
 
             return Ok(new
             {
                 idSucursal,
-                totalVentas = total
+                fecha = DateTime.Today.ToString("yyyy-MM-dd"),
+                totalHoy = total
             });
         }
 
-        // =========================
-        // CREAR VENTA
-        // =========================
+        // =========================================
+        // POST: api/Ventas
+        // Alta: registrar nueva venta
+        // =========================================
+
+        /// <summary>
+        /// Registra una nueva venta en el sistema
+        /// Descuenta automáticamente el inventario de cada producto vendido
+        /// Valida stock disponible antes de procesar
+        /// </summary>
         [HttpPost]
-        public async Task<IActionResult> CrearVenta(CreateVentaDTO dto)
+        public async Task<IActionResult> PostVenta(CreateVentaDTO dto)
         {
-            decimal total = 0;
+            var (exito, mensaje, resultado) = await _ventaServices.RegistrarVentaAsync(dto);
 
-            var venta = new Venta
-            {
-                Fecha = DateTime.Now,
-                IdCliente = dto.IdCliente,
-                IdEmpleado = dto.IdEmpleado,
-                IdSucursal = dto.IdSucursal
-            };
+            if (!exito)
+                return BadRequest(new { mensaje });
 
-            _context.Ventas.Add(venta);
-
-            await _context.SaveChangesAsync();
-
-            foreach (var item in dto.Productos)
-            {
-                // Buscar producto
-                var producto = await _context.Productos
-                    .FirstOrDefaultAsync(p =>
-                        p.IdProducto == item.IdProducto);
-
-                if (producto == null)
-                {
-                    return BadRequest(
-                        $"Producto {item.IdProducto} no encontrado");
-                }
-
-                // Buscar inventario
-                var inventario = await _context.Inventarios
-                    .FirstOrDefaultAsync(i =>
-                        i.IdProducto == item.IdProducto &&
-                        i.IdSucursal == dto.IdSucursal);
-
-                if (inventario == null)
-                {
-                    return BadRequest(
-                        $"Inventario no encontrado");
-                }
-
-                // Validar stock
-                if (inventario.Stock < item.Cantidad)
-                {
-                    return BadRequest(
-                        $"Stock insuficiente para " +
-                        producto.NombreProducto);
-                }
-
-                // Calcular subtotal
-                decimal subtotal =
-                    producto.PrecioUnitario * item.Cantidad;
-
-                total += subtotal;
-
-                // Crear detalle venta
-                var detalle = new DetalleVenta
-                {
-                    IdVenta = venta.IdVenta,
-                    IdProducto = item.IdProducto,
-                    Cantidad = item.Cantidad,
-                    SubTotal = subtotal
-                };
-
-                _context.DetallesVenta.Add(detalle);
-
-                // Descontar inventario
-                inventario.Stock -= item.Cantidad;
-            }
-
-            // Actualizar total final
-            venta.TotalFinal = total;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                mensaje = "Venta realizada correctamente",
-                total
-            });
-        }
-
-        // =========================
-        // DELETE
-        // =========================
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteVenta(int id)
-        {
-            var venta = await _context.Ventas
-                .FindAsync(id);
-
-            if (venta == null)
-            {
-                return NotFound();
-            }
-
-            _context.Ventas.Remove(venta);
-
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return Ok(new { mensaje, resultado });
         }
     }
 }

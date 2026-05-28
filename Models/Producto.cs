@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Proyecto_Final.Models
 {
@@ -30,6 +31,7 @@ namespace Proyecto_Final.Models
 
         // Navigation Property
         // Navigation Property
+        [JsonIgnore]
         [ForeignKey(nameof(IdProveedor))]
         public Proveedor Proveedor { get; set; }
     }

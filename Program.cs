@@ -14,8 +14,7 @@ builder.Services.AddControllers();
 //    La cadena de conexión está en appsettings.json -> "Conexion"
 // ─────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("Conexion")));
+    options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ─────────────────────────────────────────────────────────────
 // 3. INYECCIÓN DE DEPENDENCIAS — Servicios de negocio

@@ -59,14 +59,31 @@ namespace Proyecto_Final.Data
         public DbSet<Reporte_Venta> Reportes_Venta { get; set; }
 
         // ─────────────────────────────────────────────
-        // CONFIGURACIÓN DE RELACIONES
+        // CONFIGURACIÓN DE RELACIONES Y MAPEO ORACLE
         // ─────────────────────────────────────────────
 
         /// <summary>
-        /// Configura las llaves compuestas y relaciones especiales del modelo
+        /// Configura las llaves compuestas, relaciones especiales y el mapeo a tablas de Oracle
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // 1. Mapeo explícito a nombres de tablas en Oracle (Garantiza coincidencia exacta con tus scripts)
+            modelBuilder.Entity<Sucursal>().ToTable("SUCURSAL");
+            modelBuilder.Entity<Empleado>().ToTable("EMPLEADO");
+            modelBuilder.Entity<Cliente>().ToTable("CLIENTE");
+            modelBuilder.Entity<Proveedor>().ToTable("PROVEEDOR");
+            modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
+            modelBuilder.Entity<Inventario>().ToTable("INVENTARIO");
+            modelBuilder.Entity<Venta>().ToTable("VENTA");
+            modelBuilder.Entity<DetalleVenta>().ToTable("DETALLE_VENTA");
+            modelBuilder.Entity<Reporte>().ToTable("REPORTE");
+
+            // Si agregas tablas extras que no estaban en los scripts iniciales, mantén su mapeo en mayúsculas:
+            modelBuilder.Entity<Dia>().ToTable("DIA");
+            modelBuilder.Entity<Visita>().ToTable("VISITA");
+            modelBuilder.Entity<Reporte_Venta>().ToTable("REPORTE_VENTA");
+
+            // 2. Llaves primarias compuestas
             // Llave primaria compuesta: DetalleVenta (IdVenta + IdProducto)
             modelBuilder.Entity<DetalleVenta>()
                 .HasKey(dv => new { dv.IdVenta, dv.IdProducto });
@@ -75,20 +92,24 @@ namespace Proyecto_Final.Data
             modelBuilder.Entity<Inventario>()
                 .HasKey(i => new { i.IdProducto, i.IdSucursal });
 
-            // Relación Venta → DetalleVenta (una venta tiene muchos detalles)
+            // 3. Configuración de Relaciones y Llaves Foráneas (Foreign Keys)
+            // Relación Venta → DetalleVenta
             modelBuilder.Entity<DetalleVenta>()
                 .HasOne(d => d.Venta)
                 .WithMany(v => v.DetallesVenta)
                 .HasForeignKey(d => d.IdVenta)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Relación Reporte_Venta → evitar múltiples cascadas en SQL Server
+            // Relación Reporte_Venta → Venta
+            // NOTA: Oracle maneja los esquemas de cascada diferente a SQL Server, 
+            // pero mantener "NoAction" o "Restrict" aquí es totalmente seguro.
             modelBuilder.Entity<Reporte_Venta>()
                 .HasOne(rv => rv.Venta)
                 .WithMany()
                 .HasForeignKey(rv => rv.IdVenta)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            // Relación Reporte_Venta → Reporte
             modelBuilder.Entity<Reporte_Venta>()
                 .HasOne(rv => rv.Reporte)
                 .WithMany(r => r.Reportes_Venta)
